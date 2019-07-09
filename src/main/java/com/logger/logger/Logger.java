@@ -1,5 +1,9 @@
 package com.logger.logger;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -20,7 +24,12 @@ public class Logger {
         }
     }
 
-    public void log(Object message, String sessionId) {
+    /**
+     *
+     * @param httpEntity it can be RequestEntity, ResponseEntity or Exception
+     * @param sessionId
+     */
+    public void log(Object httpEntity, String sessionId) {
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         String time = dateFormat.format(date);
@@ -36,23 +45,30 @@ public class Logger {
                 .append(calendar.get(Calendar.DAY_OF_MONTH)).append(separator).append(sessionId).append(separator);
         String callCount = "1";
 
-        File fullPath = new File(rootPath.toString() + logPath.toString());
+        StringBuilder fullPathString = new StringBuilder(rootPath.toString() + logPath.toString());
+        if (httpEntity instanceof RequestEntity) {
+            fullPathString.append(callCount).append(separator).append("request").append(separator);
+        } else {
+            fullPathString.append(callCount).append(separator).append("response").append(separator);
+        }
+
+        File fullPath = new File(fullPathString.toString());
         File logFile;
 
         if (!fullPath.exists()) {
             fullPath.mkdirs();
-            logFile = new File(rootPath.toString() + logPath.toString() + callCount + ".log");
+            logFile = new File(fullPathString.toString() + callCount + ".log");
         } else {
             //TODO call count
-            logFile = new File(rootPath.toString() + logPath.toString() + callCount + ".log");
+            logFile = new File(fullPathString.toString() + callCount + ".log");
         }
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(logFile));){
-            writer.write(time + "\t");
-            if (message instanceof Exception) {
-                ((Exception) message).printStackTrace(writer);
+            writer.write(time + "\n");
+            if (httpEntity instanceof Exception) {
+                ((Exception) httpEntity).printStackTrace(writer);
             } else {
-                writer.write(time + "\t" + message + "\n");
+                writer.write( httpEntity + "\n");
             }
 
         } catch (IOException e) {
