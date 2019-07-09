@@ -64,6 +64,7 @@ public class ProxyLogger {
             if (requestForSession) {
                 responseEntity = restTemplate.exchange(uri, method, new HttpEntity<String>(body), String.class);
                 JSONObject jsonObject = new JSONObject(responseEntity.getBody());
+                // TODO
                 sessionId = jsonObject.getString("sessionID");
                 sessionService.create(sessionId);
                 logger.log(requestEntity, sessionId);
