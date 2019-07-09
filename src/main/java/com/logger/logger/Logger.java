@@ -1,8 +1,11 @@
 package com.logger.logger;
 
+import com.logger.session.service.SessionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -11,7 +14,12 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 public class Logger {
+
+    @Autowired
+    private SessionService sessionService;
+
     public static void main(String[] args) throws IOException {
         //log("TEST", 11);
         String string = "one/session/12345/next";
@@ -43,7 +51,9 @@ public class Logger {
         StringBuilder logPath = new StringBuilder();
         logPath.append(calendar.get(Calendar.YEAR)).append(separator).append(calendar.get(Calendar.MONTH) + 1).append(separator)
                 .append(calendar.get(Calendar.DAY_OF_MONTH)).append(separator).append(sessionId).append(separator);
-        String callCount = "1";
+
+        int callCount = sessionService.read(sessionId).getCallCount();
+        sessionService.update(sessionId, callCount++);
 
         StringBuilder fullPathString = new StringBuilder(rootPath.toString() + logPath.toString());
         if (httpEntity instanceof RequestEntity) {
@@ -57,11 +67,9 @@ public class Logger {
 
         if (!fullPath.exists()) {
             fullPath.mkdirs();
-            logFile = new File(fullPathString.toString() + callCount + ".log");
-        } else {
-            //TODO call count
-            logFile = new File(fullPathString.toString() + callCount + ".log");
         }
+
+        logFile = new File(fullPathString.toString() + callCount + ".log");
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(logFile));){
             writer.write(time + "\n");

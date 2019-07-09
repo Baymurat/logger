@@ -1,7 +1,9 @@
 package com.logger.logger;
 
+import com.logger.session.service.SessionService;
 import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -18,6 +20,12 @@ import java.util.regex.Pattern;
 @RestController
 public class ProxyLogger {
 
+    @Autowired
+    private SessionService sessionService;
+
+    @Autowired
+    private Logger logger;
+
     private String server = "localhost";
     private int port = 8000;
 
@@ -25,7 +33,6 @@ public class ProxyLogger {
     @ResponseBody
     public ResponseEntity mirrorRest(@RequestBody(required = false) String body, HttpMethod method, RequestEntity requestEntity) throws URISyntaxException
     {
-        Logger logger = new Logger();
         String requestUri = requestEntity.getUrl().getPath();
         Pattern pattern = Pattern.compile("session/\\d+");
         Matcher matcher = pattern.matcher(requestUri);
@@ -58,6 +65,7 @@ public class ProxyLogger {
                 responseEntity = restTemplate.exchange(uri, method, new HttpEntity<String>(body), String.class);
                 JSONObject jsonObject = new JSONObject(responseEntity.getBody());
                 sessionId = jsonObject.getString("sessionID");
+                sessionService.create(sessionId);
                 logger.log(requestEntity, sessionId);
                 logger.log(responseEntity, sessionId);
             } else {
