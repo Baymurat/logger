@@ -1,5 +1,7 @@
-package com.logger.logger;
+package com.logger.controller;
 
+import com.logger.logger.Logger;
+import com.logger.session.service.SecondService;
 import com.logger.session.service.SessionService;
 import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONObject;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,13 +21,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-public class ProxyLogger {
+public class LoggerController {
 
     @Autowired
     private SessionService sessionService;
 
     @Autowired
     private Logger logger;
+
+    @Autowired
+    private SecondService secondService;
 
     private String server = "localhost";
     private int port = 8000;
@@ -64,7 +70,6 @@ public class ProxyLogger {
             if (requestForSession) {
                 responseEntity = restTemplate.exchange(uri, method, new HttpEntity<String>(body), String.class);
                 JSONObject jsonObject = new JSONObject(responseEntity.getBody());
-                // TODO
                 sessionId = jsonObject.getString("sessionID");
                 sessionService.create(sessionId);
                 logger.log(requestEntity, sessionId);
@@ -76,6 +81,7 @@ public class ProxyLogger {
             }
         } catch (Exception e) {
             logger.log(e, sessionId);
+            return new ResponseEntity<String>(((HttpClientErrorException)e).getStatusCode());
         }
 
         return responseEntity;

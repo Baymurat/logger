@@ -1,11 +1,14 @@
 package com.logger.logger;
 
+import com.logger.session.entity.Session;
+import com.logger.session.service.SecondService;
 import com.logger.session.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -20,7 +23,10 @@ public class Logger {
     @Autowired
     private SessionService sessionService;
 
-    public static void main(String[] args) throws IOException {
+    @Autowired
+    private SecondService secondService;
+
+    /*public static void main(String[] args) throws IOException {
         //log("TEST", 11);
         String string = "one/session/12345/next";
         Pattern pattern = Pattern.compile("session/\\d+");
@@ -30,7 +36,7 @@ public class Logger {
         if (matcher.find()) {
             System.out.println(matcher.group(0));
         }
-    }
+    }*/
 
     /**
      *
@@ -38,6 +44,12 @@ public class Logger {
      * @param sessionId
      */
     public void log(Object httpEntity, String sessionId) {
+        if (sessionId == null) {
+            sessionId = "common";
+            //sessionService.create(sessionId);
+            secondService.updateCallCount(sessionId);
+        }
+
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         String time = dateFormat.format(date);
@@ -52,8 +64,10 @@ public class Logger {
         logPath.append(calendar.get(Calendar.YEAR)).append(separator).append(calendar.get(Calendar.MONTH) + 1).append(separator)
                 .append(calendar.get(Calendar.DAY_OF_MONTH)).append(separator).append(sessionId).append(separator);
 
-        int callCount = sessionService.read(sessionId).getCallCount();
-        sessionService.update(sessionId, callCount++);
+        //int callCount = sessionService.read(sessionId).getCallCount();
+        int callCount = secondService.getCallCount(sessionId);
+        secondService.updateCallCount(sessionId);
+        //sessionService.update(sessionId, callCount++);
 
         StringBuilder fullPathString = new StringBuilder(rootPath.toString() + logPath.toString());
         if (httpEntity instanceof RequestEntity) {

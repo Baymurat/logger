@@ -2,6 +2,7 @@ package com.logger.session.service;
 
 import com.logger.session.entity.Session;
 import com.logger.session.repository.SessionRepository;
+import com.logger.utils.ObjectMapperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,21 +15,24 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public Session create(String sessionId) {
-        return sessionRepository.save(new Session(sessionId, 0));
+        Session session = sessionRepository.save(new Session(sessionId, 0));
+        return ObjectMapperUtils.map(session, Session.class);
     }
 
     @Transactional(readOnly = true)
     @Override
     public Session read(String sessionId) {
-        return sessionRepository.findBySessionID(sessionId);
+        Session session = sessionRepository.findBySessionID(sessionId).orElseThrow(IllegalStateException::new);
+        return ObjectMapperUtils.map(session, Session.class);
     }
 
     @Transactional
     @Override
     public Session update(String sessionId, int callCount) {
-        Session session = sessionRepository.findBySessionID(sessionId);
+        Session session = sessionRepository.findBySessionID(sessionId).orElseThrow(IllegalStateException::new);
         session.setCallCount(callCount);
-        return session;
+        //sessionRepository.flush();
+        return ObjectMapperUtils.map(session, Session.class);
     }
 
     @Override
