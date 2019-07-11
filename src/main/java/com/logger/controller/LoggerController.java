@@ -1,9 +1,7 @@
 package com.logger.controller;
 
 import com.logger.logger.Logger;
-import com.logger.session.service.SecondService;
 import com.logger.session.service.SessionService;
-import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Matcher;
@@ -24,13 +21,10 @@ import java.util.regex.Pattern;
 public class LoggerController {
 
     @Autowired
-    private SessionService sessionService;
-
-    @Autowired
     private Logger logger;
 
     @Autowired
-    private SecondService secondService;
+    private SessionService sessionService;
 
     private String server = "localhost";
     private int port = 8000;
@@ -71,7 +65,6 @@ public class LoggerController {
                 responseEntity = restTemplate.exchange(uri, method, new HttpEntity<String>(body), String.class);
                 JSONObject jsonObject = new JSONObject(responseEntity.getBody());
                 sessionId = jsonObject.getString("sessionID");
-                sessionService.create(sessionId);
                 logger.log(requestEntity, sessionId);
                 logger.log(responseEntity, sessionId);
             } else {

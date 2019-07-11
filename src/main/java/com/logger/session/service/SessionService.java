@@ -1,14 +1,26 @@
 package com.logger.session.service;
 
-import com.logger.session.entity.Session;
+import org.springframework.stereotype.Service;
 
-public interface SessionService {
+import java.util.HashMap;
+import java.util.Map;
 
-    Session create(String sessionId);
+@Service
+public class SessionService {
 
-    Session read(String sessionId);
+    private Map<String, Integer> callCountMap = new HashMap<>();
 
-    Session update(String sessionId, int callCount);
+    public void updateCallCount(String sessionId) {
+        if (!callCountMap.containsKey(sessionId)) {
+            callCountMap.put(sessionId, 1);
+        } else {
+            int callCount = callCountMap.get(sessionId);
+            callCountMap.put(sessionId, ++callCount);
+        }
 
-    void delete(Long id);
+    }
+
+    public int getCallCount(String sessionId) {
+        return callCountMap.getOrDefault(sessionId, -1);
+    }
 }
